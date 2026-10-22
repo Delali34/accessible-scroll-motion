@@ -83,3 +83,6 @@ upgrade an existing site or move a production release pointer.
   the versions listed on the introduction page. Re-test them before changing
   any sample or version.
 - Out of scope: page transitions, smooth-scrolling libraries, canvas and WebGL.
+- The **Build with Thally** tab (`build-with-thally`) is a first-person article
+  about how this site was built and published. It documents Thally, not the
+  motion pattern, so keep its dated observations as written.

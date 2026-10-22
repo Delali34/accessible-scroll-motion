@@ -15,6 +15,7 @@ Cloud. Every push to `main` triggers a managed production deployment.
 | `src/content/quickstart.mdx` | From `create-next-app` to a scroll-triggered fade-up |
 | `src/content/guides/reduce-motion-toggle.mdx` | Add an on-site Reduce motion toggle, plus troubleshooting |
 | `src/content/reference/motion-helpers.mdx` | Reference for `motionAllowed()`, `fadeUp()`, and `settleAnimations()` |
+| `src/content/build-with-thally.mdx` | Article: how this site was built and published with Thally Cloud |
 | `src/content/changelog.mdx` | Changes to the docs |
 | `docs.json` | Tabs, sidebar groups, and page order |
 | `src/data/site.ts` | Site name, description, and links |

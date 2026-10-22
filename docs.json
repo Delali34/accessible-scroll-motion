@@ -40,6 +40,15 @@
       ]
     },
     {
+      "tab": "Build with Thally",
+      "groups": [
+        {
+          "group": "Article",
+          "pages": ["build-with-thally"]
+        }
+      ]
+    },
+    {
       "tab": "Changelog",
       "href": "/changelog"
     }
