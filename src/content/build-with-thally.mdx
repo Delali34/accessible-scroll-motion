@@ -1,69 +1,63 @@
 ---
 title: Publish a focused docs site with Thally Cloud
-description: How this site was built and published with Thally Cloud, step by step, including the obstacles along the way and how each was resolved.
+description: How I built and published this site with Thally Cloud, from sign-up to a live URL, and what tripped me up along the way.
 ---
 
-This walkthrough shows how I built and published this site, a small
-documentation site for adding GSAP scroll animation to a Next.js App Router
-project. Follow it to publish your own: one [introduction](/), one
-[quickstart](/quickstart) that works, and one [practical guide](/guides/reduce-motion-toggle),
-all deployed from a GitHub repository. The source for this site is
+I built this site to document a pattern I keep reusing on client projects:
+scroll animation with GSAP in the Next.js App Router that doesn't get in the way
+of people who need less motion. This is how I put it together and published it
+with Thally Cloud, so you can do the same with a topic of your own.
+
+The site is small on purpose: an [introduction](/), a [quickstart](/quickstart),
+one [practical guide](/guides/reduce-motion-toggle), and a short reference. The
+source is on GitHub at
 [Delali34/accessible-scroll-motion](https://github.com/Delali34/accessible-scroll-motion)
-if you want to compare.
+if you want to follow along.
 
-It covers the managed Thally Cloud path. The Thally setup itself took
-minutes. Most of the time went into writing the docs and testing the code in
-them.
+Setting up Thally took a few minutes. Most of my time went into writing the
+pages and testing the code in them. I wrote this in October 2026 with
+`@thallylabs/cli` 0.8.124 and `create-thally-docs` 0.10.121, so some details
+may have changed since.
 
-Written in October 2026 against `@thallylabs/cli` 0.8.124 and
-`create-thally-docs` 0.10.121.
+## What you need
 
-## Prerequisites
-
-- A Thally Cloud account. A new workspace gets a one-time 7-day trial on first
-  sign-in, with room for three sites.
-- A GitHub account that can install the Thally GitHub App.
-- Node.js 20.19+, 22.14+, or 24+, plus Git, for editing and checking content
-  locally. You don't need either to publish the starter site.
-- Something you know well enough to document. Pick a narrow topic. A small site
-  with code that works beats a broad site with untested samples.
+- A Thally Cloud account. New workspaces get a 7-day trial with room for three
+  sites.
+- A GitHub account where you can install the Thally GitHub App.
+- Node.js 20.19+, 22.14+, or 24+ and Git, if you want to edit and check content
+  on your machine. You don't need either just to publish the starter site.
+- A topic you know well. Keep it narrow. A small site with code that works is
+  better than a big one with samples nobody has run.
 
 ## 1. Create the site in Thally Cloud
 
-Sign in at [app.thally.io](https://app.thally.io). You can use GitHub, Google,
-or email. When I wrote this, **Continue with Google** failed with "Error 401:
-deleted_client", so I signed up with email instead. A new account verifies its
-email address and then goes through a short onboarding questionnaire. Then
-select **Create a site** on the workspace Home page. The wizard has five steps.
+Sign up at [app.thally.io](https://app.thally.io). You can use GitHub, Google,
+or email. Google didn't work for me (it ended with "Error 401:
+deleted_client"), so I used email. After you verify your email and answer a few
+onboarding questions, select **Create a site** on the Home page. The wizard has
+five steps:
 
-1. **Site details.** Enter a site name, a one-line summary of up to 240
-   characters, and a `thally.app` address. The address field doesn't fill
-   itself from the name, so type it. Thally checks availability as you type and
-   confirms with "*address* is available".
-2. **Docs source.** Choose **Create a new docs repository**, then select
-   **Check GitHub** and approve the Thally GitHub App. Creating a fresh
-   repository needs **All repositories** access, because the app has to
-   initialize a repository that doesn't exist yet.
-
-   The new repository defaults to **Private**. If anyone outside your GitHub
-   account needs to read the source, such as reviewers or contributors, turn
-   **Private repository** off here.
-3. **Product sources.** Pick the repositories that Thally Track should watch, or
-   select **Skip for now**. Track reads *merged pull requests*, so a repository
-   where you push straight to the default branch won't produce any updates
-   until you start merging PRs. Your docs repository is automatically left
-   out.
-4. **Knowledge surfaces.** These are other repositories, such as a marketing
-   site, where Track may open draft PRs. Skip this unless you have one ready.
+1. **Site details.** A name, a one-line summary of up to 240 characters, and a
+   `thally.app` address. The address doesn't fill in from the name, so type it
+   yourself. Thally tells you straight away whether it's available.
+2. **Docs source.** Choose **Create a new docs repository**, select **Check
+   GitHub**, and approve the Thally GitHub App. It needs **All repositories**
+   access so it can create the new repository for you. This is also where you
+   choose whether the repository is private. I made mine public so anyone can
+   read the source.
+3. **Product sources.** Pick the repositories Thally Track should watch, or
+   select **Skip for now**. Track works from merged pull requests, so it won't
+   notice commits pushed straight to the main branch.
+4. **Knowledge surfaces.** Optional. Skip it unless you have another repository,
+   like a marketing site, that should get update PRs too.
 5. **Review and publish.** Check the summary and select **Publish site**.
 
-Thally creates the repository from its starter template and runs the first
-deployment. Mine went from **Building** to **Live** in about a minute, and Home
-showed an agent readiness score of 89/100 for the starter content.
+Thally creates the repository from its starter template and deploys it. Mine
+was live in about a minute.
 
-## 2. Clone the repository and learn its layout
+## 2. Get to know the repository
 
-The site summary on Home links to the repository. Clone it and install
+Clone the repository from the link on the site summary and install the
 dependencies:
 
 ```bash
@@ -72,27 +66,26 @@ cd YOUR_REPO
 npm ci
 ```
 
-The repository has about 400 files, but you'll only touch a handful:
+There are around 400 files, but you'll only work in a few of them:
 
 | Path | What it's for |
 | --- | --- |
-| `src/content/**/*.mdx` | Your pages. Each needs `title` and `description` frontmatter. |
+| `src/content/**/*.mdx` | Your pages. Each one needs `title` and `description` frontmatter. |
 | `docs.json` | Tabs, sidebar groups, and page order |
-| `src/data/site.ts` | Site name, description, and header links (Cloud fills these in for you) |
+| `src/data/site.ts` | Site name, description, and header links (Thally fills these in for you) |
 | `AGENTS.md` | Instructions for coding agents, with a "Product context" section for you to fill in |
 | `README.md` | Yours to rewrite |
 
-Everything else is the Thally runtime. `starter-release.json` lists which paths
-are framework-owned and which are yours: `README.md` and `AGENTS.md` are marked
-`userOwnedNeverOverwrite`. Read `AGENTS.md` before editing. It sets the writing
-standards and says which files to leave alone.
+The rest is the Thally runtime. `starter-release.json` spells out which files
+are yours; `README.md` and `AGENTS.md` are both marked
+`userOwnedNeverOverwrite`. It's worth reading `AGENTS.md` before you start,
+because it covers the writing style and which files to leave alone.
 
 ## 3. Replace the starter content
 
-The starter ships with example pages that teach Thally itself. Delete the ones
-you don't need with `git rm`, then make `docs.json` list only the pages that
-exist. This is the navigation for this site, including the tab you're reading
-now:
+The starter comes with example pages about Thally itself. Delete the ones you
+don't need with `git rm`, then update `docs.json` so it only lists pages that
+exist. Here's the navigation for this site, including the tab you're reading:
 
 ```json title="docs.json"
 "tabs": [
@@ -112,85 +105,79 @@ now:
 ]
 ```
 
-If your product has no HTTP API, remove the **API Reference** tab *and*
-`openapi.yaml`. When there's no spec, `/openapi.yaml` falls back to describing
-the site's own read-only API, so agent discovery files don't break.
+My topic doesn't have an HTTP API, so I removed the **API Reference** tab and
+`openapi.yaml`. Without a spec, `/openapi.yaml` describes the site's own
+read-only API instead, so nothing breaks.
 
-To write pages, I used a small set of components that the starter already
-provides:
+These are the components I used. They all come with the starter:
 
 - `<Hero>` on the introduction page, which has `mode: home` in its frontmatter
-- `<Steps>` and `<Step title="…">` for the quickstart and guide
-- `<CardGroup cols="3">` and `<Card icon="…" href="…">` to link onward. Icons
-  must come from an allowlist in `src/components/mdx/content-icon.tsx`.
+- `<Steps>` and `<Step title="…">` for the quickstart and the guide
+- `<CardGroup cols="3">` and `<Card icon="…" href="…">` for links to other
+  pages. Icon names come from an allowlist in
+  `src/components/mdx/content-icon.tsx`.
 - `<Note type="info|tip|warning|danger">` for callouts
-- Fenced code blocks with a filename: `` ```tsx title="lib/motion.ts" ``
+- Code blocks with a filename: `` ```tsx title="lib/motion.ts" ``
 
-Use `###` headings for troubleshooting entries. Each one gets a stable anchor,
-such as [`#cards-stay-invisible-after-turning-on-reduce-motion`](/guides/reduce-motion-toggle#cards-stay-invisible-after-turning-on-reduce-motion),
-that other pages can link to.
+For troubleshooting, use `###` headings. Each one gets a stable anchor, like
+[this one](/guides/reduce-motion-toggle#cards-stay-invisible-after-turning-on-reduce-motion),
+so other pages can link straight to it.
 
-## 4. Test every code sample before you publish it
+## 4. Test your code samples
 
-This step matters more than any Thally setting. I created a throwaway app with
-the exact command from my quickstart, `npx create-next-app@latest motion-demo --yes`,
-pasted in each sample, and ran it in a browser. That caught three things I'd
-have shipped otherwise:
+If you only take one thing from this article, take this one. I created a fresh
+app with the same command as my quickstart,
+`npx create-next-app@latest motion-demo --yes`, pasted in every sample, and ran
+it in a browser. It caught three things I would have published otherwise:
 
 - My first version of the toggle set React state inside `useEffect`. The
-  current `eslint-config-next` rejects that with `react-hooks/set-state-in-effect`,
+  current `eslint-config-next` rejects that (`react-hooks/set-state-in-effect`),
   so I rewrote it with `useSyncExternalStore`.
-- An inline `<script>` in `layout.tsx` logs "Encountered a script tag while
+- The inline `<script>` in `layout.tsx` logs "Encountered a script tag while
   rendering React component" after Fast Refresh, but not on a full page load.
-  I documented that rather than leaving readers to wonder.
-- I reproduced the classic GSAP-in-React bug (`useEffect` plus `gsap.from()`
-  under Strict Mode left an element stuck at `opacity: 0.0232`) and quoted the
-  real numbers in the [troubleshooting section](/guides/reduce-motion-toggle#troubleshooting).
+  That's now a troubleshooting entry.
+- Using `useEffect` with `gsap.from()` under Strict Mode left an element stuck
+  at `opacity: 0.0232`. That one's in the
+  [troubleshooting section](/guides/reduce-motion-toggle#troubleshooting) too.
 
-Record the versions you tested in the docs, so readers know what "works" means.
+It also helps to list the versions you tested with, so readers know what
+"works" means.
 
 ## 5. Check and build
 
-Run Thally's content check and a production build before every push:
+Run Thally's check and a production build before every push:
 
 ```bash
 npx --yes @thallylabs/cli@latest check
 npm run build
 ```
 
-**Windows obstacle.** On Windows with Node.js in `C:\Program Files`, `check`
-failed with:
+On Windows, `check` failed for me with:
 
 ```text
 'C:\Program' is not recognized as an internal or external command,
 operable program or batch file.
 ```
 
-The CLI (`@thallylabs/cli` 0.8.124) runs its helper with
-`spawn(process.execPath, args, { shell: true })` on Windows, and the unquoted
-path breaks at the space. `check` only delegates to the `create-thally-docs`
-package, so calling that directly works:
+The CLI starts Node through the shell, and the space in `C:\Program Files`
+breaks the path. Running the check from its underlying package works fine:
 
 ```bash
 npx --yes create-thally-docs@latest check . --ci
 ```
 
-It reported `0 error(s), 0 warning(s)`. The bug is tracked in
-[thallylabs/thally#333](https://github.com/thallylabs/thally/issues/333), and I
-opened a fix in [thallylabs/thally#342](https://github.com/thallylabs/thally/pull/342).
+The bug is tracked in
+[thallylabs/thally#333](https://github.com/thallylabs/thally/issues/333), and
+I've opened a fix in
+[thallylabs/thally#342](https://github.com/thallylabs/thally/pull/342).
 
-The production build took about a minute and a half and printed one framework
-warning (the `middleware` file convention is deprecated), which isn't caused by
-content.
+The build took about a minute and a half on my machine. After that, I ran
+`npm run dev`, opened `http://localhost:3040`, and clicked through every page to
+make sure the code blocks and links looked right.
 
-Then run `npm run dev` and open `http://localhost:3040` to read the pages as a
-reader would. I checked the navigation, every code block's filename label, the
-heading anchors that other pages link to, and the external links.
+## 6. Publish
 
-## 6. Publish and verify
-
-Commit only your content changes and push to the production branch (`main` for
-a Cloud-created repository):
+Commit your changes and push them to `main`:
 
 ```bash
 git add docs.json src/content AGENTS.md README.md
@@ -198,37 +185,34 @@ git commit -m "Add docs"
 git push origin main
 ```
 
-Thally Cloud picks up the push, shows the commit message under **Recent
-activity** as **Building**, and switches to **Successful** when it's live. Mine
-took about two minutes. Then confirm from outside the dashboard:
+Thally picks up the push and shows it under **Recent activity**, first as
+**Building** and then as **Successful**. Mine took about two minutes. Then check
+it from outside the dashboard:
 
 ```bash
 curl -I https://YOUR-SITE.thally.app/quickstart
 curl https://YOUR-SITE.thally.app/llms.txt
 ```
 
-The site also serves Markdown mirrors (append `.md` to a page URL),
-`llms.txt`, `AGENTS.md`, `skill.md`, and a read-only MCP endpoint at `/api/mcp`.
-You get all of these from the same MDX without extra work. After my content
-went live, agent readiness rose from 89 to 97 out of 100.
+You also get a Markdown version of every page (add `.md` to the URL),
+`llms.txt`, `AGENTS.md`, `skill.md`, and a read-only MCP endpoint at
+`/api/mcp`, all from the same MDX files. Once my content was live, the agent
+readiness score went from 89 to 97.
 
-## Obstacles and how I resolved them
+## What tripped me up
 
-| Obstacle | Resolution |
+| Problem | What I did |
 | --- | --- |
-| **Continue with Google** failed with "Error 401: deleted_client" | Signed up and signed in with email instead |
-| New repository defaulted to private, but reviewers needed to read it | Turned off **Private repository** in the Docs source step |
-| `thally check` failed on Windows with `'C:\Program' is not recognized…` | Ran `npx --yes create-thally-docs@latest check . --ci` instead, then opened a fix ([#342](https://github.com/thallylabs/thally/pull/342)) |
-| Starter's sample API reference didn't fit a docs site with no API | Removed the API tab from `docs.json` and deleted `openapi.yaml` |
-| Starter README described Thally's template, not my project | Rewrote it; `starter-release.json` marks it as user-owned |
-| Track only reacts to merged PRs; my product repository had none | Connected it anyway and noted that Track stays quiet until PRs are merged |
-| Sample code failed the project's own lint rules | Tested every sample in a fresh app and fixed it before publishing |
+| **Continue with Google** failed with "Error 401: deleted_client" | Signed up with email instead |
+| `thally check` failed on Windows with `'C:\Program' is not recognized…` | Used `npx --yes create-thally-docs@latest check . --ci`, then opened a fix ([#342](https://github.com/thallylabs/thally/pull/342)) |
+| My first toggle failed the project's lint rules | Rewrote it with `useSyncExternalStore` after testing it in a fresh app |
 
-## Next steps
+## What's next
 
-- Add a custom domain from the site's domain settings. Thally shows the DNS
+- Add a custom domain from the site's domain settings. Thally shows you the DNS
   records to add at your DNS provider.
-- Fill in the "Product context" section of `AGENTS.md` so that Track and
+- Fill in the "Product context" section of `AGENTS.md` so Thally Track and
   coding agents use your terminology.
-- Connect an editor to the local authoring MCP server (`npx -y @thallylabs/mcp`)
-  and the live site's read-only MCP endpoint (`https://YOUR-SITE.thally.app/api/mcp`).
+- Connect your editor to the local authoring MCP server
+  (`npx -y @thallylabs/mcp`) and to your site's read-only MCP endpoint
+  (`https://YOUR-SITE.thally.app/api/mcp`).
