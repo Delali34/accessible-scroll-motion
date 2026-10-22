@@ -159,7 +159,7 @@ const brandPresets: Record<BrandPresetKey, BrandConfig> = {
 
 const brandPreset: BrandPresetKey = 'primary'
 
-export const siteConfig: SiteConfig = {
+const templateSiteConfig: SiteConfig = {
   name: 'Documentation',
   description:
     'Clear, task-focused guidance for building with the product.',
@@ -172,3 +172,17 @@ export const siteConfig: SiteConfig = {
   brandPreset,
   brandPresets,
 }
+
+// Managed by Thally Cloud onboarding.
+export const siteConfig: SiteConfig = {
+  ...templateSiteConfig,
+  name: "Accessible Scroll Motion",
+  description: "Add GSAP scroll animations to a Next.js App Router site that respect reduced-motion settings, keep content readable by screen readers, and clean up after themselves. For React developers new to GSAP.",
+  repoUrl: "https://github.com/Delali34/accessible-scroll-motion",
+  links: [
+    { label: "Get started", href: "/quickstart" },
+    { label: "Support", href: "https://github.com/Delali34/accessible-scroll-motion/issues/new" },
+    { label: "GitHub", href: "https://github.com/Delali34/accessible-scroll-motion" },
+    { label: "Changelog", href: "/changelog" },
+  ],
+};
