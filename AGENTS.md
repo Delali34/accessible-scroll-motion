@@ -71,4 +71,15 @@ upgrade an existing site or move a production release pointer.
 
 ## Product context
 
-<!-- Add canonical terminology, audience details, and content boundaries here. -->
+- Subject: scroll-triggered animation with GSAP, ScrollTrigger, and
+  `@gsap/react` in the Next.js App Router, built so motion is opt-out.
+- Audience: React developers who know the App Router basics and are new to
+  GSAP.
+- Canonical names: `lib/motion.ts` holds the helpers `motionAllowed()`,
+  `fadeUp()`, and `settleAnimations()`. The on-site control is the
+  **Reduce motion** toggle; the `reduce-motion` class on `<html>` is its single
+  source of truth, persisted in `localStorage` under the key `reduce-motion`.
+- Code samples must run unchanged in a fresh `create-next-app --yes` project at
+  the versions listed on the introduction page. Re-test them before changing
+  any sample or version.
+- Out of scope: page transitions, smooth-scrolling libraries, canvas and WebGL.

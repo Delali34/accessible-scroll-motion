@@ -1,0 +1,253 @@
+---
+title: Add a Reduce motion toggle
+description: Let readers switch animation off from your site, remember their choice across visits, and finish any animation already in progress.
+---
+
+The operating system's reduced-motion setting only helps readers who know it
+exists and are allowed to change it. On a shared, school, or work computer, many
+can't. A toggle on the page puts the choice in front of everyone and helps you
+meet WCAG 2.2 success criterion 2.3.3, Animation from Interactions.
+
+By the end of this guide, your site will have a **Reduce motion** button that:
+
+- stops scroll animations immediately, including ones that are halfway through
+  or still waiting to play
+- remembers the choice on the reader's device
+- applies a saved choice before the first paint, so content never flashes
+  hidden and then appears
+
+## Before you begin
+
+Complete the [quickstart](/quickstart). This guide builds on its
+`lib/motion.ts`, whose `motionAllowed()` already returns `false` when `<html>`
+has a `reduce-motion` class.
+
+## How it works
+
+The `reduce-motion` class on `<html>` is the single source of truth:
+
+1. An inline script in the root layout reads the saved choice from
+   `localStorage` and adds the class before the page paints.
+2. `motionAllowed()` sees the class, so components skip creating animations.
+3. The toggle button flips the class, saves the new choice, and calls
+   `settleAnimations()` to finish anything already running.
+
+<Steps>
+  <Step title="Add settleAnimations() to the helpers">
+    Add this function to the end of `lib/motion.ts`:
+
+    ```tsx title="lib/motion.ts"
+    // Jump every running or waiting animation to its end state, then remove the
+    // scroll triggers. Use it when a reader turns on "Reduce motion" mid-visit.
+    export function settleAnimations() {
+      ScrollTrigger.getAll().forEach((st) => {
+        st.animation?.progress(1);
+        st.kill();
+      });
+      gsap.globalTimeline.getChildren(true, true, false).forEach((t) => t.progress(1));
+    }
+    ```
+
+    Without this step, any card that hasn't scrolled into view yet stays at
+    `opacity: 0`, because its animation is still waiting for a trigger that
+    will now never fire.
+  </Step>
+  <Step title="Build the toggle">
+    Create `app/components/MotionToggle.tsx`:
+
+    ```tsx title="app/components/MotionToggle.tsx"
+    "use client";
+
+    import { useSyncExternalStore } from "react";
+    import { settleAnimations } from "@/lib/motion";
+
+    // The class on <html> is the source of truth. The inline script in
+    // layout.tsx sets it before first paint; this component reads and flips it.
+    function subscribe(onChange: () => void) {
+      const observer = new MutationObserver(onChange);
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+      return () => observer.disconnect();
+    }
+    const getSnapshot = () => document.documentElement.classList.contains("reduce-motion");
+    const getServerSnapshot = () => false;
+
+    export default function MotionToggle() {
+      const reduced = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+      function toggle() {
+        const next = !reduced;
+        document.documentElement.classList.toggle("reduce-motion", next);
+        try {
+          localStorage.setItem("reduce-motion", next ? "on" : "off");
+        } catch {}
+        if (next) settleAnimations();
+      }
+
+      return (
+        <button
+          type="button"
+          aria-pressed={reduced}
+          onClick={toggle}
+          className="fixed right-4 bottom-4 rounded-full border border-black/15 bg-background px-4 py-2 text-sm dark:border-white/20"
+        >
+          Reduce motion: {reduced ? "on" : "off"}
+        </button>
+      );
+    }
+    ```
+
+    - `aria-pressed` tells assistive technology that this is an on/off toggle
+      and which state it's in.
+    - `useSyncExternalStore` reads the class directly from `<html>`. That keeps
+      the button in sync with the inline script and avoids the
+      `react-hooks/set-state-in-effect` lint error you'd get from copying the
+      class into state inside `useEffect`.
+    - The `try` block keeps the toggle working when storage is blocked, such as
+      in some private browsing modes.
+  </Step>
+  <Step title="Add the script and toggle to the root layout">
+    Update `app/layout.tsx`. The new lines are the `MotionToggle` import, the
+    `motionScript` constant, `suppressHydrationWarning`, the `<head>` element,
+    and `<MotionToggle />`:
+
+    ```tsx title="app/layout.tsx"
+    import type { Metadata } from "next";
+    import { Geist, Geist_Mono } from "next/font/google";
+    import MotionToggle from "./components/MotionToggle";
+    import "./globals.css";
+
+    const geistSans = Geist({
+      variable: "--font-geist-sans",
+      subsets: ["latin"],
+    });
+
+    const geistMono = Geist_Mono({
+      variable: "--font-geist-mono",
+      subsets: ["latin"],
+    });
+
+    export const metadata: Metadata = {
+      title: "Create Next App",
+      description: "Generated by create next app",
+    };
+
+    // Runs before first paint, so a saved "Reduce motion" choice applies before
+    // any animation code can hide or move content.
+    const motionScript = `try{if(localStorage.getItem("reduce-motion")==="on")document.documentElement.classList.add("reduce-motion")}catch(e){}`;
+
+    export default function RootLayout({ children }: LayoutProps<"/">) {
+      return (
+        <html
+          lang="en"
+          className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+          suppressHydrationWarning
+        >
+          <head>
+            <script dangerouslySetInnerHTML={{ __html: motionScript }} />
+          </head>
+          <body className="min-h-full flex flex-col">
+            {children}
+            <MotionToggle />
+          </body>
+        </html>
+      );
+    }
+    ```
+
+    `suppressHydrationWarning` is needed because the script can add a class to
+    `<html>` before React hydrates, so the client's class list may differ from
+    the server's. It only affects the `<html>` element itself, not its children.
+  </Step>
+  <Step title="Stop CSS motion too">
+    GSAP isn't the only source of movement. Add this to the end of
+    `app/globals.css` so CSS transitions, keyframe animations, and smooth
+    scrolling respect the toggle as well:
+
+    ```css title="app/globals.css"
+    /* Stop CSS transitions and smooth scrolling too, not just GSAP. */
+    html.reduce-motion *,
+    html.reduce-motion *::before,
+    html.reduce-motion *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    ```
+
+    The durations are `0.01ms` rather than `0` so that `animationend` and
+    `transitionend` events still fire for any code that waits on them.
+  </Step>
+  <Step title="Check the result">
+    Run `npm run dev` and open [http://localhost:3000](http://localhost:3000).
+    Don't scroll yet.
+
+    1. Select **Reduce motion: off**. The button changes to **Reduce motion:
+       on**.
+    2. Scroll down. The cards are already fully visible and don't move.
+    3. Reload the page. The button still says **on**, and the cards are visible
+       without any flash.
+    4. Select the button again to turn motion back on, then reload. The cards
+       fade up as before.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+### Cards stay invisible after turning on Reduce motion
+
+The animations were created before the reader switched motion off and are
+still waiting for their scroll triggers. Make sure the toggle calls
+`settleAnimations()` when it turns motion off, as in step 2.
+
+### Animations only break in development
+
+If you animate in `useEffect` instead of `useGSAP`, React Strict Mode runs the
+effect twice in development. A `gsap.from()` tween created on the second run
+reads the half-hidden state left by the first one and treats it as the end
+state. In testing, the element was stuck at `opacity: 0.0232`. Use
+`useGSAP()`, which reverts the first run before the second. Production builds
+don't run effects twice, which is why the bug can look development-only.
+
+### Error: "You're importing a module that depends on `useRef` into a React Server Component module"
+
+A component that uses `useRef`, `useGSAP`, or any other hook is missing the
+`"use client"` directive. Add `"use client";` as the first line of that file.
+Keep pages such as `app/page.tsx` as Server Components and move animation into
+small client components.
+
+### ESLint: "Avoid calling setState() directly within an effect"
+
+The `react-hooks/set-state-in-effect` rule in current `eslint-config-next`
+flags code that copies a value into state inside `useEffect`. Read external
+values such as the `<html>` class with `useSyncExternalStore`, as in step 2.
+
+### Console: "Encountered a script tag while rendering React component"
+
+This appears in development after Fast Refresh re-renders `app/layout.tsx`, for
+example right after you save it. The inline script is part of the
+server-rendered HTML, so it still runs on every full page load. Reload the page
+and the message doesn't return.
+
+### Animations start at the wrong scroll position
+
+ScrollTrigger measures trigger positions when the page loads and when the
+window resizes. If the layout changes after that, for example when a font
+size setting changes or an accordion opens, refresh the measurements once the
+new layout has rendered:
+
+```tsx
+requestAnimationFrame(() => ScrollTrigger.refresh());
+```
+
+### Turning motion back on doesn't replay animations
+
+That's expected. `settleAnimations()` removes the triggers it finishes.
+Components create new animations the next time they mount, which happens on
+the next page load or navigation.
+
+## Related
+
+- [Motion helpers reference](/reference/motion-helpers)
+- [WCAG 2.2: Understanding Animation from Interactions](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html)
+- [GSAP: React and useGSAP](https://gsap.com/resources/React/)

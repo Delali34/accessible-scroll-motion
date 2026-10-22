@@ -1,45 +1,73 @@
 ---
 title: Introduction
-description: Give readers a clear path from their first question to a result they can verify.
+description: Add scroll-triggered GSAP animation to a Next.js App Router site without shutting out readers who need less motion.
 mode: home
 ---
 
 <Hero
-  title="Build documentation around the reader"
-  subtitle="Start with a useful first result, organize what follows, and publish every format from one reviewable source."
-  primaryLabel="Get started"
+  title="Scroll animation that respects your readers"
+  subtitle="A small, tested pattern for GSAP and ScrollTrigger in the Next.js App Router. Animations clean up after themselves, keep content available to screen readers, and switch off when a reader asks for less motion."
+  primaryLabel="Start the quickstart"
   primaryHref="/quickstart"
-  secondaryLabel="Publish your docs"
-  secondaryHref="/guides/create-a-site"
+  secondaryLabel="Add a Reduce motion toggle"
+  secondaryHref="/guides/reduce-motion-toggle"
 />
 
-## Build the reader journey
+## What this is
 
-Begin with the task that brings most readers to your documentation, then make
-the next useful step obvious.
+Scroll-triggered reveals make a page feel alive, but they can also hide content
+from people who use screen readers, trigger nausea for readers with vestibular
+disorders, and leak animations between page navigations in React. This site
+documents one way to get the effect without those costs.
 
-<CardGroup cols="2">
-  <Card title="Write your quickstart" icon="party-horn" href="/quickstart">
-    Turn prerequisites, setup, one realistic task, and verification into a short path.
+Everything lives in one file, `lib/motion.ts`, with three helpers:
+
+- `motionAllowed()` checks the operating system setting and an on-site toggle
+  before anything moves.
+- `fadeUp()` fades elements up once as they scroll into view. It animates
+  opacity only, so the content stays in the accessibility tree the whole time.
+- `settleAnimations()` finishes every running animation the moment a reader
+  turns motion off.
+
+Components call these helpers from the `useGSAP()` hook, which scopes selectors
+to one component and reverts every animation when the component unmounts.
+
+## Who it's for
+
+- React developers who know the basics of the Next.js App Router and are new to
+  GSAP.
+- Teams that want scroll animation on a marketing, product, or nonprofit site
+  and need to meet accessibility expectations such as WCAG 2.2 success
+  criterion 2.3.3, Animation from Interactions.
+
+This site doesn't cover page transitions, smooth-scrolling libraries, or canvas
+and WebGL animation.
+
+## Start here
+
+<CardGroup cols="3">
+  <Card title="Quickstart" icon="rocket-launch" href="/quickstart">
+    Go from `create-next-app` to cards that fade up on scroll in about ten minutes.
   </Card>
-  <Card title="Organize your navigation" icon="grid-round" href="/customization">
-    Group related tasks and references around how people use your product.
+  <Card title="Add a Reduce motion toggle" icon="eye-slash" href="/guides/reduce-motion-toggle">
+    Let readers switch motion off from your site and remember their choice.
   </Card>
-  <Card title="Document your API" icon="code-simple" href="/api">
-    Replace `openapi.yaml` to publish browsable endpoint docs with a live playground.
-  </Card>
-  <Card title="Learn the Thally workflow" icon="wrench" href="/guides/create-a-site">
-    Create, publish, and update sites from the Cloud dashboard, the CLI, or your AI tools.
+  <Card title="Motion helpers reference" icon="code-simple" href="/reference/motion-helpers">
+    Parameters and behavior for every helper in `lib/motion.ts`.
   </Card>
 </CardGroup>
 
-## Publish from one source
+## Tested with
 
-Thally turns the same reviewed content into HTML, search, agent discovery files,
-Markdown mirrors, and a read-only MCP surface — so people and AI tools read the
-same, current answer. Add only the locales your readers need.
+Every code sample on this site was run in a fresh `create-next-app` project
+with these versions:
 
-<Note type="info" title="Start with the product, not the template">
-  Replace this page with the questions, terminology, and workflows your readers
-  already use. Keep `docs.json` focused on the path between those tasks.
-</Note>
+| Package | Version |
+| --- | --- |
+| `next` | 16.4.2 |
+| `react` | 19.3.0 |
+| `gsap` | 3.15.0 |
+| `@gsap/react` | 2.1.2 |
+| Node.js | 24.12.0 |
+
+The same helpers also run in production on Next.js 14.2 with React 18.

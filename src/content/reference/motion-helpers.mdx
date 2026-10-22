@@ -1,0 +1,69 @@
+---
+title: Motion helpers reference
+description: Parameters, return values, and behavior of motionAllowed, fadeUp, and settleAnimations in lib/motion.ts.
+---
+
+All helpers live in `lib/motion.ts`, which the [quickstart](/quickstart)
+creates and the [Reduce motion toggle guide](/guides/reduce-motion-toggle)
+extends. The file is a client module: it registers `ScrollTrigger` and
+`useGSAP` with GSAP once, then re-exports `gsap`, `ScrollTrigger`, and
+`useGSAP` so components import everything from one place.
+
+```tsx
+import { gsap, ScrollTrigger, useGSAP, motionAllowed, fadeUp, settleAnimations } from "@/lib/motion";
+```
+
+## motionAllowed()
+
+```tsx
+motionAllowed(): boolean
+```
+
+Returns `true` when animation is allowed. It returns `false` when any of these
+is true:
+
+- The code is running on the server, where there's no `window`.
+- `<html>` has the `reduce-motion` class, set by the on-site toggle.
+- The operating system reports `prefers-reduced-motion: reduce`.
+
+Call it at the top of a `useGSAP()` callback and return early when it's
+`false`, before any code hides or moves elements.
+
+## fadeUp()
+
+```tsx
+fadeUp(
+  targets: gsap.TweenTarget,
+  trigger: Element | null,
+  options?: { y?: number; stagger?: number; start?: string },
+): void
+```
+
+Hides `targets` immediately, then fades them in and moves them up once
+`trigger` scrolls into view. The animation plays once and doesn't reverse when
+the reader scrolls back up.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `targets` | — | Elements to animate. Pass the result of a scoped selector, such as `q(".feature")`. |
+| `trigger` | — | The element whose position starts the animation, usually the component's root. If it's `null`, nothing happens. |
+| `options.y` | `24` | Starting vertical offset in pixels. |
+| `options.stagger` | `0.08` | Seconds between each target starting. |
+| `options.start` | `"top 85%"` | [ScrollTrigger start position](https://gsap.com/docs/v3/Plugins/ScrollTrigger/#start): when the top of `trigger` reaches 85% of the way down the viewport. |
+
+`fadeUp()` animates `opacity`, never `visibility` or `display`, so the content
+stays in the accessibility tree and screen readers can reach it before it's
+revealed.
+
+## settleAnimations()
+
+```tsx
+settleAnimations(): void
+```
+
+Jumps every running or waiting GSAP animation to its end state and kills every
+ScrollTrigger. Call it when a reader turns motion off mid-visit so that content
+waiting for a trigger becomes visible immediately.
+
+Components create fresh animations the next time they mount. Until then, turning
+motion back on doesn't replay the settled ones.

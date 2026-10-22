@@ -1,47 +1,189 @@
 ---
 title: Quickstart
-description: Guide a new reader through one useful workflow and show them how to verify it.
+description: Build a section whose cards fade up as they scroll into view, and skip the animation for readers who prefer reduced motion.
 ---
 
-A strong quickstart produces one meaningful result. Replace the placeholders
-below with the shortest supported path for your product.
+In about ten minutes, you'll create a Next.js app, add GSAP, and build a section
+whose cards fade up as they scroll into view. Readers whose system asks for
+reduced motion see the same cards immediately, with no animation.
 
 ## Before you begin
 
-List only the requirements needed for this workflow:
-
-- An account or credential, when required
-- A supported runtime, device, browser, or operating system
-- Permission to create or change the resource used in the example
+- Node.js 20.9 or later. Run `node --version` to check.
+- Basic familiarity with React components and the Next.js `app` directory.
 
 <Steps>
-  <Step title="Install the required tool">
-    Give readers one recommended installation command.
+  <Step title="Create a Next.js app">
+    Create a project with the default options (TypeScript, Tailwind CSS,
+    ESLint, the App Router, and the `@/*` import alias):
 
     ```bash
-    npm install your-package
+    npx create-next-app@latest motion-demo --yes
+    cd motion-demo
     ```
+
+    Installing dependencies can take a few minutes on a slow connection.
   </Step>
-  <Step title="Add the minimum configuration">
-    Include only the values needed for the first successful run.
+  <Step title="Install GSAP">
+    Install GSAP and its official React hook:
 
     ```bash
-    your-cli init
+    npm install gsap @gsap/react
     ```
+
+    ScrollTrigger ships inside the `gsap` package, so there's nothing else to
+    install.
   </Step>
-  <Step title="Complete the first task">
-    Use a realistic example that produces an observable result.
+  <Step title="Add the motion helpers">
+    Create `lib/motion.ts` in the project root. This file registers the
+    plugins once and exports the helpers every component uses.
+
+    ```tsx title="lib/motion.ts"
+    "use client";
+
+    import { gsap } from "gsap";
+    import { ScrollTrigger } from "gsap/ScrollTrigger";
+    import { useGSAP } from "@gsap/react";
+
+    gsap.registerPlugin(ScrollTrigger, useGSAP);
+
+    export { gsap, ScrollTrigger, useGSAP };
+
+    // Motion is opt-out: return false when the OS or the site asks for less motion.
+    export function motionAllowed() {
+      if (typeof window === "undefined") return false;
+      if (document.documentElement.classList.contains("reduce-motion")) return false;
+      return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
+
+    // Fade targets up once `trigger` scrolls into view. Animates opacity only,
+    // never visibility, so screen readers can reach the content before it's revealed.
+    export function fadeUp(
+      targets: gsap.TweenTarget,
+      trigger: Element | null,
+      { y = 24, stagger = 0.08, start = "top 85%" } = {},
+    ) {
+      if (!trigger) return;
+      gsap.set(targets, { opacity: 0, y });
+      gsap.to(targets, {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: "power2.out",
+        stagger,
+        scrollTrigger: { trigger, start, once: true },
+      });
+    }
+    ```
+
+    `motionAllowed()` also checks for a `reduce-motion` class on `<html>`. You
+    don't need that class yet; the [Reduce motion toggle guide](/guides/reduce-motion-toggle)
+    uses it.
+  </Step>
+  <Step title="Build an animated section">
+    Create `app/components/FeatureList.tsx`:
+
+    ```tsx title="app/components/FeatureList.tsx"
+    "use client";
+
+    import { useRef } from "react";
+    import { gsap, useGSAP, motionAllowed, fadeUp } from "@/lib/motion";
+
+    const features = [
+      { title: "Scoped", body: "Selectors only match elements inside this section." },
+      { title: "Self-cleaning", body: "useGSAP reverts every tween when the component unmounts." },
+      { title: "Respectful", body: "Nothing moves when the reader asks for reduced motion." },
+    ];
+
+    export default function FeatureList() {
+      const root = useRef<HTMLElement>(null);
+
+      useGSAP(
+        () => {
+          if (!motionAllowed()) return;
+          const q = gsap.utils.selector(root);
+          fadeUp(q(".feature"), root.current);
+        },
+        { scope: root },
+      );
+
+      return (
+        <section ref={root} className="mx-auto max-w-3xl px-6 py-24">
+          <h2 className="text-3xl font-semibold">Why this pattern</h2>
+          <ul className="mt-8 grid gap-4 sm:grid-cols-3">
+            {features.map((f) => (
+              <li key={f.title} className="feature rounded-xl border border-black/10 p-6 dark:border-white/15">
+                <h3 className="font-semibold">{f.title}</h3>
+                <p className="mt-2 text-sm opacity-80">{f.body}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    }
+    ```
+
+    Three details do the work here:
+
+    - `"use client"` is required because `useRef` and `useGSAP` only run in
+      Client Components.
+    - `{ scope: root }` and `gsap.utils.selector(root)` limit `.feature` to
+      this section, so other sections can reuse the class name.
+    - Returning early when `motionAllowed()` is false means the cards are never
+      hidden in the first place.
+  </Step>
+  <Step title="Render it below the fold">
+    Replace the contents of `app/page.tsx` so there's something to scroll past
+    first:
+
+    ```tsx title="app/page.tsx"
+    import FeatureList from "./components/FeatureList";
+
+    export default function Home() {
+      return (
+        <main>
+          <section className="flex min-h-screen items-center justify-center px-6">
+            <h1 className="text-4xl font-bold">Scroll down</h1>
+          </section>
+          <FeatureList />
+        </main>
+      );
+    }
+    ```
+
+    `page.tsx` stays a Server Component. Only `FeatureList` ships JavaScript.
+  </Step>
+  <Step title="Run it and check the result">
+    Start the development server:
 
     ```bash
-    your-cli start
+    npm run dev
     ```
-  </Step>
-  <Step title="Verify the result">
-    State exactly what the reader should see and how to recover when it does not appear.
+
+    Open [http://localhost:3000](http://localhost:3000) and scroll down. The
+    three cards should rise 24 pixels and fade in one after another.
+
+    Now check the reduced-motion path in Chrome:
+
+    1. Open DevTools, press `Ctrl+Shift+P` (`Cmd+Shift+P` on macOS), and run
+       **Show Rendering**.
+    2. Set **Emulate CSS media feature prefers-reduced-motion** to `reduce`.
+    3. Reload the page and scroll down.
+
+    The cards should already be fully visible, with no movement.
   </Step>
 </Steps>
 
-## Choose the next task
+## If something goes wrong
 
-Link to the guide that naturally follows this result. Avoid ending the reader’s
-journey with a generic list of every feature.
+- **The cards never appear.** Check the browser console for errors, and make
+  sure `lib/motion.ts` and `FeatureList.tsx` both start with `"use client"`.
+- **The build fails with an error that mentions `useRef` and React Server
+  Components.** A file that uses hooks is missing `"use client"`. See
+  [troubleshooting](/guides/reduce-motion-toggle#troubleshooting).
+
+## Next step
+
+Readers can't always change their operating system settings, for example on a
+shared or managed computer. [Add a Reduce motion toggle](/guides/reduce-motion-toggle)
+so they can switch animation off from your site.
